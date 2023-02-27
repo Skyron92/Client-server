@@ -6,18 +6,15 @@ public class NetworkCommandLine : MonoBehaviour
 {
     private NetworkManager netManager;
 
-    void Start()
-    {
+    void Start() {
         netManager = GetComponentInParent<NetworkManager>();
 
         if (Application.isEditor) return;
 
         var args = GetCommandlineArgs();
 
-        if (args.TryGetValue("-mode", out string mode))
-        {
-            switch (mode)
-            {
+        if (args.TryGetValue("-mode", out string mode)) {
+            switch (mode) {
                 case "server":
                     netManager.StartServer();
                     break;
@@ -25,7 +22,6 @@ public class NetworkCommandLine : MonoBehaviour
                     netManager.StartHost();
                     break;
                 case "client":
-         
                     netManager.StartClient();
                     break;
             }
