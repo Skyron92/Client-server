@@ -13,6 +13,8 @@ namespace ClientServer
         
         
         [SerializeField] private float speed;
+        [SerializeField] private float rotationHorizontalSpeed;
+        [SerializeField] private float rotationVerticalSpeed;
         
         [Header("GUN SETTINGS")]
         [SerializeField] private Transform gunTransform;
@@ -25,7 +27,7 @@ namespace ClientServer
             if (IsOwner) {
                 Move();
             }
-            GetComponentInChildren<Camera>().enabled = IsLocalPlayer ? true : false;
+            GetComponentInChildren<Camera>().enabled = IsLocalPlayer;
         }
 
         public void Move() {
@@ -36,15 +38,25 @@ namespace ClientServer
 
         void Shoot() {
             if (!Input.GetButtonDown("Fire1")) return;
-            if (!NetworkManager.Singleton.IsServer && !IsOwner) return;
+            if (!NetworkManager.Singleton.IsServer && !IsOwner && !IsLocalPlayer && IsHost) return;
             GameObject instance = Instantiate(bullet, gunTransform);
             Rigidbody bulRb = instance.GetComponent<Rigidbody>();
             bulRb.AddForce(transform.forward * bulletSpeed * Time.deltaTime, ForceMode.Impulse);
         }
 
+        void Rotate() {
+            if(!IsOwner && !NetworkManager.Singleton.IsServer && !IsLocalPlayer && IsHost) return;
+            Quaternion rotation = new Quaternion();
+            rotation.y += Input.mousePosition.x * rotationHorizontalSpeed;
+            rotation.x += Input.mousePosition.y * rotationVerticalSpeed;
+            Mathf.Clamp(rotation.x, -35, 45);
+            transform.rotation = rotation;
+        }
+
         void Update() {
             Move();
             Shoot();
+            Rotate();
         }
         
     }
