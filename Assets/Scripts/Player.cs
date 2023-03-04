@@ -1,20 +1,22 @@
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Networking;
-using UnityEngine.Networking.Types;
 
 namespace ClientServer
 {
     public class Player : NetworkBehaviour {
         
         [Header("PLAYER SETTINGS")]
-        [SerializeField] private Rigidbody _rigidbody;
-        [SerializeField] private Vector3 force;
-        
-        
+        [SerializeField] private CharacterController _controller;
+
+
         [SerializeField] private float speed;
+        [SerializeField] private Transform cameraTransform;
+        Quaternion rotation;
+        private float gravityValue = -9.81f, v, h;
+        private Vector3 playerVelocity;
         [SerializeField] private float rotationHorizontalSpeed;
         [SerializeField] private float rotationVerticalSpeed;
+        [SerializeField] private float VerticalLimit;
         
         [Header("GUN SETTINGS")]
         [SerializeField] private Transform gunTransform;
@@ -32,25 +34,39 @@ namespace ClientServer
 
         public void Move() {
             if(!IsOwner && !NetworkManager.Singleton.IsServer && !IsLocalPlayer && IsHost) return;
-            force = new Vector3(Input.GetAxisRaw("Horizontal"),0 ,Input.GetAxisRaw("Vertical")) * speed * Time.deltaTime;
-            _rigidbody.AddForce(force, ForceMode.Acceleration);
+            Vector3 move = Vector3.zero;
+            v = 0;
+            h = 0;
+            v += Input.GetAxis("Vertical");
+            h += Input.GetAxis("Horizontal");
+            move += cameraTransform.forward * v * speed * Time.deltaTime;
+            move += cameraTransform.right * h * speed * Time.deltaTime;
+            _controller.Move(move);
+
+            playerVelocity.y += gravityValue * Time.deltaTime;
+            _controller.Move(playerVelocity * Time.deltaTime);
         }
 
         void Shoot() {
             if (!Input.GetButtonDown("Fire1")) return;
-            if (!NetworkManager.Singleton.IsServer && !IsOwner && !IsLocalPlayer && IsHost) return;
+            if (!IsLocalPlayer) return;
             GameObject instance = Instantiate(bullet, gunTransform);
             Rigidbody bulRb = instance.GetComponent<Rigidbody>();
-            bulRb.AddForce(transform.forward * bulletSpeed * Time.deltaTime, ForceMode.Impulse);
+            bulRb.AddForce(gunTransform.forward * bulletSpeed * Time.deltaTime, ForceMode.Impulse);
         }
 
         void Rotate() {
             if(!IsOwner && !NetworkManager.Singleton.IsServer && !IsLocalPlayer && IsHost) return;
-            Quaternion rotation = new Quaternion();
-            rotation.y += Input.mousePosition.x * rotationHorizontalSpeed;
-            rotation.x += Input.mousePosition.y * rotationVerticalSpeed;
-            Mathf.Clamp(rotation.x, -35, 45);
-            transform.rotation = rotation;
+            rotation.x += Input.GetAxis("Mouse X") * rotationHorizontalSpeed;
+            rotation.y += Input.GetAxis("Mouse Y") * rotationVerticalSpeed;
+            rotation.y = Mathf.Clamp(rotation.y, -VerticalLimit, VerticalLimit);
+            Quaternion Xquat = Quaternion.AngleAxis(rotation.x, Vector3.up);
+            Quaternion Yquat = Quaternion.AngleAxis(rotation.y, Vector3.left);
+            cameraTransform.localRotation = Xquat * Yquat;
+
+            var transformLocalRotation = transform.rotation;
+            transformLocalRotation.y = cameraTransform.localRotation.y;
+            transform.rotation = transformLocalRotation;
         }
 
         void Update() {
