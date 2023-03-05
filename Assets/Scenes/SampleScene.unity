@@ -691,6 +691,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1370373879}
   - component: {fileID: 1370373878}
+  - component: {fileID: 1370373881}
   - component: {fileID: 1370373880}
   m_Layer: 0
   m_Name: GameManager
@@ -735,11 +736,28 @@ MonoBehaviour:
   m_GameObject: {fileID: 1370373877}
   m_Enabled: 1
   m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 4100868794
+  AlwaysReplicateAsRoot: 0
+  DontDestroyWithOwner: 1
+  AutoObjectParentSync: 1
+--- !u!114 &1370373881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370373877}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7dc079e4e4fff9f4b8aba5663cbaa113, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ennemy: {fileID: 6386934948483208984, guid: a62cfd83a892aa3488391c3817e0be5a, type: 3}
-  spawnPoints:
+  PrefabToSpawn: {fileID: 6386934948483208984, guid: a62cfd83a892aa3488391c3817e0be5a, type: 3}
+  SpawnPrefabAutomatically: 1
+  SpawnPoints:
   - {fileID: 435422584}
   - {fileID: 1202793814}
 --- !u!1 &1938558851

@@ -30,6 +30,8 @@ namespace ClientServer
                 Move();
             }
             GetComponentInChildren<Camera>().enabled = IsLocalPlayer;
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
         }
 
         public void Move() {
@@ -56,7 +58,7 @@ namespace ClientServer
         }
 
         void Rotate() {
-            if(!IsOwner && !NetworkManager.Singleton.IsServer && !IsLocalPlayer && IsHost) return;
+            if(!IsOwner && NetworkManager.Singleton.IsServer && !IsLocalPlayer && IsHost) return;
             rotation.x += Input.GetAxis("Mouse X") * rotationHorizontalSpeed;
             rotation.y += Input.GetAxis("Mouse Y") * rotationVerticalSpeed;
             rotation.y = Mathf.Clamp(rotation.y, -VerticalLimit, VerticalLimit);
