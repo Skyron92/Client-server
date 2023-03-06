@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ namespace ClientServer
         [Header("PLAYER SETTINGS")]
         [SerializeField] private CharacterController _controller;
 
+        public static List<Player> Players = new List<Player>();
 
         [SerializeField] private float speed;
         [SerializeField] private Transform cameraTransform;
@@ -19,15 +21,15 @@ namespace ClientServer
         [SerializeField] private float VerticalLimit;
         
         [Header("GUN SETTINGS")]
-        [SerializeField] private Transform gunTransform;
+        private RaycastHit _hit;
 
-        [SerializeField] private GameObject bullet;
-        [SerializeField] private float bulletSpeed;
+        [SerializeField] private float maxRange;
         
 
         public override void OnNetworkSpawn() {
             if (IsOwner) {
                 Move();
+                Players.Add(this);
             }
             GetComponentInChildren<Camera>().enabled = IsLocalPlayer;
             Cursor.lockState = CursorLockMode.Locked;
@@ -52,9 +54,11 @@ namespace ClientServer
         void Shoot() {
             if (!Input.GetButtonDown("Fire1")) return;
             if (!IsLocalPlayer) return;
-            GameObject instance = Instantiate(bullet, gunTransform);
-            Rigidbody bulRb = instance.GetComponent<Rigidbody>();
-            bulRb.AddForce(gunTransform.forward * bulletSpeed * Time.deltaTime, ForceMode.Impulse);
+            if (Physics.Raycast(cameraTransform.position, cameraTransform.forward, out _hit, maxRange)) {
+                if (_hit.collider.gameObject.CompareTag("Zombie")) {
+                    Destroy(_hit.collider.gameObject);
+                }
+            }
         }
 
         void Rotate() {
@@ -76,6 +80,5 @@ namespace ClientServer
             Shoot();
             Rotate();
         }
-        
     }
 }

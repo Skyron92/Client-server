@@ -150,9 +150,7 @@ MonoBehaviour:
   rotationHorizontalSpeed: 5
   rotationVerticalSpeed: 5
   VerticalLimit: 35
-  gunTransform: {fileID: 6400438197266078893}
-  bullet: {fileID: 4145048385269187092, guid: 8fd7f1ab958fe1845a7f1d9a3544e409, type: 3}
-  bulletSpeed: 500
+  maxRange: 25
 --- !u!114 &4335377120746933787
 MonoBehaviour:
   m_ObjectHideFlags: 0
