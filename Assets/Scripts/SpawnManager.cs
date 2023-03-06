@@ -12,7 +12,6 @@ namespace ClientServer
     public bool SpawnPrefabAutomatically;
     public List<Transform> SpawnPoints = new List<Transform>();
     private static float _time;
-
     private GameObject m_PrefabInstance;
     private NetworkObject m_SpawnedNetworkObject;
 
@@ -24,13 +23,6 @@ namespace ClientServer
             m_SpawnedNetworkObject = m_PrefabInstance.GetComponent<NetworkObject>();
             m_SpawnedNetworkObject.Spawn();
         }
-        Debug.Log(Player.Players.Count);
-    }
-
-    private IEnumerator SpawnTimer() {
-        yield return new WaitForSeconds(2);
-        SpawnInstance();
-        yield break;
     }
 
     public NetworkObject Instantiate(ulong ownerClientId, Vector3 position, Quaternion rotation) {
@@ -42,7 +34,7 @@ namespace ClientServer
         m_PrefabInstance.SetActive(false);
     }
 
-    public void SpawnInstance() {
+    private void SpawnInstance() {
         if (!IsServer) return;
         if (m_PrefabInstance != null && m_SpawnedNetworkObject != null && !m_SpawnedNetworkObject.IsSpawned) {
             m_PrefabInstance.SetActive(true);
