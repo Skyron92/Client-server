@@ -6,15 +6,15 @@ using UnityEngine.AI;
 
 public class Zombie : NetworkBehaviour {
     
-    [SerializeField] private NavMeshAgent navMeshAgent;
+    private NavMeshAgent _navMeshAgent;
     private Vector3 _targetPosition;
     private Vector3 _targetDirection;
     private Vector3 _targetPoint;
     private float _x, _z, _distanceWithPlayer;
     private bool HasReachedDestination => Vector3.Distance(transform.position, _targetPoint) < 0.1f;
 
-    public override void OnNetworkSpawn() {
-        navMeshAgent = GetComponent<NavMeshAgent>();
+    public void Awake() {
+        _navMeshAgent = GetComponent<NavMeshAgent>();
     }
 
     private void Update() {
@@ -28,12 +28,6 @@ public class Zombie : NetworkBehaviour {
         _targetDirection = _targetPosition - transform.position;
         _distanceWithPlayer = Vector3.Distance(_targetDirection, transform.position);
         _targetPoint = _targetDirection.normalized * _distanceWithPlayer;
-        navMeshAgent.SetDestination(_targetPoint);
-    }
-    
-    public override void OnDestroy() {
-        if (gameObject != null) {
-            Destroy(gameObject);
-        }
+        _navMeshAgent.SetDestination(_targetPoint);
     }
 }

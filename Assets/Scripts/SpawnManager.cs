@@ -11,29 +11,33 @@ namespace ClientServer
     public GameObject PrefabToSpawn;
     public bool SpawnPrefabAutomatically;
     public List<Transform> SpawnPoints = new List<Transform>();
+    private static float _time;
 
     private GameObject m_PrefabInstance;
     private NetworkObject m_SpawnedNetworkObject;
 
-    private void Start() {
-        m_PrefabInstance = Instantiate(PrefabToSpawn, transform);
-        m_SpawnedNetworkObject = m_PrefabInstance.GetComponent<NetworkObject>();
-        m_PrefabInstance.SetActive(false);
-        StartCoroutine(SpawnTimer());
+    private void Update() {
+        _time += Time.deltaTime;
+        if (_time >= 2f && IsServer && Player.Players.Count > 0) {
+            _time = 0; 
+            m_PrefabInstance = Instantiate(PrefabToSpawn, SpawnPoints[Random.Range(0, SpawnPoints.Count)]);
+            m_SpawnedNetworkObject = m_PrefabInstance.GetComponent<NetworkObject>();
+            m_SpawnedNetworkObject.Spawn();
+        }
+        Debug.Log(Player.Players.Count);
     }
 
     private IEnumerator SpawnTimer() {
         yield return new WaitForSeconds(2);
         SpawnInstance();
-        StartCoroutine(SpawnTimer());
         yield break;
     }
 
     public NetworkObject Instantiate(ulong ownerClientId, Vector3 position, Quaternion rotation) {
         m_PrefabInstance.SetActive(true);
-        m_PrefabInstance.transform.position = SpawnPoints[Random.Range(0, SpawnPoints.Count)].position;
         return m_SpawnedNetworkObject;
     }
+    
     public void Destroy(NetworkObject networkObject) {
         m_PrefabInstance.SetActive(false);
     }

@@ -178,4 +178,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75d0e846ec44ad14fb6eb643109e758d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  navMeshAgent: {fileID: 0}
+  _targetPoint: {x: 0, y: 0, z: 0}

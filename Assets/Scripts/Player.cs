@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ClientServer
 {
@@ -22,6 +24,8 @@ namespace ClientServer
         
         [Header("GUN SETTINGS")]
         private RaycastHit _hit;
+        [SerializeField] private LineRenderer lineRenderer;
+        [SerializeField] private Transform gunTransform;
 
         [SerializeField] private float maxRange;
         
@@ -29,11 +33,14 @@ namespace ClientServer
         public override void OnNetworkSpawn() {
             if (IsOwner) {
                 Move();
-                Players.Add(this);
             }
             GetComponentInChildren<Camera>().enabled = IsLocalPlayer;
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+        }
+
+        private void Awake() {
+            if(IsOwner) Players.Add(this);
         }
 
         public void Move() {
@@ -56,13 +63,14 @@ namespace ClientServer
             if (!IsLocalPlayer) return;
             if (Physics.Raycast(cameraTransform.position, cameraTransform.forward, out _hit, maxRange)) {
                 if (_hit.collider.gameObject.CompareTag("Zombie")) {
-                    Destroy(_hit.collider.gameObject);
+                    NetworkObject no = _hit.collider.gameObject.GetComponent<NetworkObject>();
+                    no.Despawn();
                 }
             }
         }
 
         void Rotate() {
-            if(!IsOwner && NetworkManager.Singleton.IsServer && !IsLocalPlayer && IsHost) return;
+            if(!IsOwner && !NetworkManager.Singleton.IsServer && !IsLocalPlayer && IsHost) return;
             rotation.x += Input.GetAxis("Mouse X") * rotationHorizontalSpeed;
             rotation.y += Input.GetAxis("Mouse Y") * rotationVerticalSpeed;
             rotation.y = Mathf.Clamp(rotation.y, -VerticalLimit, VerticalLimit);
