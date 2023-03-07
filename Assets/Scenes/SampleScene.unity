@@ -1117,7 +1117,7 @@ MonoBehaviour:
   m_Port: 47777
   m_UniqueApplicationId: -3090477483183591514
   m_StartWithServer: 1
-  ServerName: EnterName
+  ServerName: MyServerTest
   OnServerFound:
     m_PersistentCalls:
       m_Calls:

@@ -11,113 +11,114 @@ using UnityEditor;
 using UnityEditor.Events;
 #endif
 
-[RequireComponent(typeof(ExampleNetworkDiscovery))]
-[RequireComponent(typeof(NetworkManager))]
-public class ExampleNetworkDiscoveryHud : MonoBehaviour
+namespace ClientServer
 {
-    [SerializeField, HideInInspector]
-    ExampleNetworkDiscovery m_Discovery;
-    
-    NetworkManager m_NetworkManager;
-
-    Dictionary<IPAddress, DiscoveryResponseData> discoveredServers = new Dictionary<IPAddress, DiscoveryResponseData>();
-
-    public Vector2 DrawOffset = new Vector2(10, 210);
-
-    void Awake()
+    [RequireComponent(typeof(ExampleNetworkDiscovery))]
+    [RequireComponent(typeof(NetworkManager))]
+    public class ExampleNetworkDiscoveryHud : MonoBehaviour
     {
-        m_Discovery = GetComponent<ExampleNetworkDiscovery>();
-        m_NetworkManager = GetComponent<NetworkManager>();
-    }
+        [SerializeField, HideInInspector] ExampleNetworkDiscovery m_Discovery;
 
-#if UNITY_EDITOR
-    void OnValidate()
-    {
-        if (m_Discovery == null) // This will only happen once because m_Discovery is a serialize field
+        Dictionary<IPAddress, DiscoveryResponseData> discoveredServers =
+            new Dictionary<IPAddress, DiscoveryResponseData>();
+
+        public Vector2 DrawOffset = new Vector2(10, 210);
+
+        void Awake()
         {
             m_Discovery = GetComponent<ExampleNetworkDiscovery>();
-            UnityEventTools.AddPersistentListener(m_Discovery.OnServerFound, OnServerFound);
-            Undo.RecordObjects(new Object[] { this, m_Discovery}, "Set NetworkDiscovery");
         }
-    }
+
+#if UNITY_EDITOR
+        void OnValidate()
+        {
+            if (m_Discovery == null) // This will only happen once because m_Discovery is a serialize field
+            {
+                m_Discovery = GetComponent<ExampleNetworkDiscovery>();
+                UnityEventTools.AddPersistentListener(m_Discovery.OnServerFound, OnServerFound);
+                Undo.RecordObjects(new Object[] {this, m_Discovery}, "Set NetworkDiscovery");
+            }
+        }
 #endif
 
-    void OnServerFound(IPEndPoint sender, DiscoveryResponseData response)
-    {
-        discoveredServers[sender.Address] = response;
-    }
-
-    void OnGUI()
-    {
-        GUILayout.BeginArea(new Rect(DrawOffset, new Vector2(200, 600)));
-
-        if (m_NetworkManager.IsServer || m_NetworkManager.IsClient)
+        void OnServerFound(IPEndPoint sender, DiscoveryResponseData response)
         {
-            if (m_NetworkManager.IsServer)
-            {
-                ServerControlsGUI();
-            }
-        }
-        else
-        {
-            ClientSearchGUI();
+            discoveredServers[sender.Address] = response;
         }
 
-        GUILayout.EndArea();
-    }
-
-    void ClientSearchGUI()
-    {
-        if (m_Discovery.IsRunning)
+        void OnGUI()
         {
-            if (GUILayout.Button("Stop Client Discovery"))
+            GUILayout.BeginArea(new Rect(DrawOffset, new Vector2(200, 600)));
+
+            if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsClient)
             {
-                m_Discovery.StopDiscovery();
-                discoveredServers.Clear();
-            }
-            
-            if (GUILayout.Button("Refresh List"))
-            {
-                discoveredServers.Clear();
-                m_Discovery.ClientBroadcast(new DiscoveryBroadcastData());
-            }
-            
-            GUILayout.Space(40);
-            
-            foreach (var discoveredServer in discoveredServers)
-            {
-                if (GUILayout.Button($"{discoveredServer.Value.ServerName}[{discoveredServer.Key.ToString()}]"))
+                if (NetworkManager.Singleton.IsServer)
                 {
-                    UnityTransport transport = (UnityTransport)m_NetworkManager.NetworkConfig.NetworkTransport;
-                    transport.SetConnectionData(discoveredServer.Key.ToString(), discoveredServer.Value.Port);
-                    m_NetworkManager.StartClient();
+                    ServerControlsGUI();
+                }
+            }
+            else
+            {
+                ClientSearchGUI();
+            }
+
+            GUILayout.EndArea();
+        }
+
+        void ClientSearchGUI()
+        {
+            if (m_Discovery.IsRunning)
+            {
+                if (GUILayout.Button("Stop Client Discovery"))
+                {
+                    m_Discovery.StopDiscovery();
+                    discoveredServers.Clear();
+                }
+
+                if (GUILayout.Button("Refresh List"))
+                {
+                    discoveredServers.Clear();
+                    m_Discovery.ClientBroadcast(new DiscoveryBroadcastData());
+                }
+
+                GUILayout.Space(40);
+
+                foreach (var discoveredServer in discoveredServers)
+                {
+                    if (GUILayout.Button($"{discoveredServer.Value.ServerName}[{discoveredServer.Key.ToString()}]"))
+                    {
+                        UnityTransport transport =
+                            (UnityTransport) NetworkManager.Singleton.NetworkConfig.NetworkTransport;
+                        transport.SetConnectionData(discoveredServer.Key.ToString(), discoveredServer.Value.Port);
+                        NetworkManager.Singleton.StartClient();
+                    }
+                }
+            }
+            else
+            {
+                if (GUILayout.Button("Discover Servers"))
+                {
+                    m_Discovery.StartClient();
+                    m_Discovery.ClientBroadcast(new DiscoveryBroadcastData());
                 }
             }
         }
-        else
-        {
-            if (GUILayout.Button("Discover Servers"))
-            {
-                m_Discovery.StartClient();
-                m_Discovery.ClientBroadcast(new DiscoveryBroadcastData());
-            }
-        }
-    }
 
-    void ServerControlsGUI()
-    {
-        if (m_Discovery.IsRunning)
+        void ServerControlsGUI()
         {
-            if (GUILayout.Button("Stop Server Discovery"))
+            if (m_Discovery.IsRunning)
             {
-                m_Discovery.StopDiscovery();
+                if (GUILayout.Button("Stop Server Discovery"))
+                {
+                    m_Discovery.StopDiscovery();
+                }
             }
-        }
-        else
-        {
-            if (GUILayout.Button("Start Server Discovery"))
+            else
             {
-                m_Discovery.StartServer();
+                if (GUILayout.Button("Start Server Discovery"))
+                {
+                    m_Discovery.StartServer();
+                }
             }
         }
     }
