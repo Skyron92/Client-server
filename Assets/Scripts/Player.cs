@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -12,7 +13,7 @@ namespace ClientServer
         [SerializeField] private CharacterController _controller;
 
         public static List<Player> Players = new List<Player>();
-
+        private NetworkObject NetworkObject;
         [SerializeField] private float speed;
         [SerializeField] private Transform cameraTransform;
         private Quaternion _rotation;
@@ -32,8 +33,8 @@ namespace ClientServer
         
 
         public override void OnNetworkSpawn() {
-            GetComponentInChildren<Camera>().enabled = IsLocalPlayer;
-            GetComponentInChildren<AudioListener>().enabled = IsLocalPlayer;
+            GetComponentInChildren<Camera>().enabled = IsOwner;
+            GetComponentInChildren<AudioListener>().enabled = IsOwner;
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }
@@ -47,7 +48,7 @@ namespace ClientServer
         }
 
         public void Move() {
-            if(!IsLocalPlayer) return;
+            if(!IsOwner) return;
             Vector3 move = Vector3.zero;
             v = 0;
             h = 0;
@@ -63,7 +64,7 @@ namespace ClientServer
 
         void Shoot() {
             if (!Input.GetButtonDown("Fire1")) return;
-            if (!IsLocalPlayer) return;
+            if (!IsOwner) return;
             _isShooting = true;
             lineRenderer.enabled = true;
             lineRenderer.SetPosition(0, gunTransform.position);
@@ -77,7 +78,7 @@ namespace ClientServer
         }
 
         void HideLaser() {
-            if(!_isShooting) return;
+            if(!IsOwner) return;
             _laserLifeTime += Time.deltaTime;
             if (_laserLifeTime >= 0.2f) {
                 _laserLifeTime = 0;
@@ -87,7 +88,7 @@ namespace ClientServer
         }
 
         void Rotate() {
-            if(!IsLocalPlayer) return;
+            if(!IsOwner) return;
             _rotation.x += Input.GetAxis("Mouse X") * rotationHorizontalSpeed;
             _rotation.y += Input.GetAxis("Mouse Y") * rotationVerticalSpeed;
             _rotation.y = Mathf.Clamp(_rotation.y, -verticalLimit, verticalLimit);

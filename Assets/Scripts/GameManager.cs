@@ -30,6 +30,7 @@ namespace ClientServer {
                             NetworkManager.Singleton.NetworkConfig.NetworkTransport.GetType().Name);
             GUILayout.Label("Mode: " + mode);
         }
+        
     }
 }
 
