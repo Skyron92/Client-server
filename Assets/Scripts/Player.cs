@@ -1,18 +1,15 @@
-using System;
 using System.Collections.Generic;
 using Unity.Netcode;
-using Unity.Netcode.Components;
 using UnityEngine;
-using UnityEngine.Serialization;
+using UnityEngine.UI;
 
 namespace ClientServer
 {
     public class Player : NetworkBehaviour {
-        
-        [Header("PLAYER SETTINGS")]
-        [SerializeField] private CharacterController _controller;
 
-        public static List<Player> Players = new List<Player>();
+        [Header("PLAYER SETTINGS")] public static List<Player> Players = new List<Player>();
+        public GameObject cameraPrefab;
+        private Camera camera;
         private NetworkObject NetworkObject;
         [SerializeField] private float speed;
         [SerializeField] private Transform cameraTransform;
@@ -22,6 +19,10 @@ namespace ClientServer
         [SerializeField] private float rotationHorizontalSpeed;
         [SerializeField] private float rotationVerticalSpeed;
         [SerializeField] private float verticalLimit;
+        [SerializeField] private Slider Life;
+        [SerializeField] private float hp;
+        [SerializeField] private float maxhp;
+        [SerializeField] private Transform respawn;
         
         [Header("GUN SETTINGS")]
         private RaycastHit _hit;
@@ -33,43 +34,37 @@ namespace ClientServer
         
 
         public override void OnNetworkSpawn() {
-            GetComponentInChildren<Camera>().enabled = IsOwner;
-            GetComponentInChildren<AudioListener>().enabled = IsOwner;
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            GameObject cam = Instantiate(cameraPrefab);
+            CameraPlayer script = cam.GetComponent<CameraPlayer>();
+            camera = cam.GetComponent<Camera>();
+            script.player = this;
+            Players.Add(this);
+            hp = maxhp;
+            Life.gameObject.SetActive(IsOwner);
+            Life.maxValue = maxhp;
         }
 
         public override void OnNetworkDespawn() {
             Players.Remove(this);
         }
 
-        private void Awake() {
-            Players.Add(this);
-        }
-
         public void Move() {
             if(!IsOwner) return;
-            Vector3 move = Vector3.zero;
-            v = 0;
-            h = 0;
-            v += Input.GetAxis("Vertical");
-            h += Input.GetAxis("Horizontal");
-            move += cameraTransform.forward * v * speed * Time.deltaTime;
-            move += cameraTransform.right * h * speed * Time.deltaTime;
-            _controller.Move(move);
-
-            playerVelocity.y += gravityValue * Time.deltaTime;
-            _controller.Move(playerVelocity * Time.deltaTime);
+            Vector3 position = transform.position;
+            position.x += Input.GetAxis("Horizontal");
+            position.z += Input.GetAxis("Vertical");
+            transform.position = position;
         }
-
-        void Shoot() {
+        
+        [ClientRpc]
+        void ShootClientRPC() {
             if (!Input.GetButtonDown("Fire1")) return;
             if (!IsOwner) return;
             _isShooting = true;
             lineRenderer.enabled = true;
             lineRenderer.SetPosition(0, gunTransform.position);
-            lineRenderer.SetPosition(1, cameraTransform.forward * maxRange);
-            if (Physics.Raycast(cameraTransform.position, cameraTransform.forward, out _hit, maxRange)) {
+            lineRenderer.SetPosition(1, transform.forward * maxRange);
+            if (Physics.Raycast(transform.position, transform.forward, out _hit, maxRange)) {
                 if (_hit.collider.gameObject.CompareTag("Zombie")) {
                     NetworkObject no = _hit.collider.gameObject.GetComponent<NetworkObject>();
                     no.Despawn();
@@ -86,24 +81,33 @@ namespace ClientServer
                 _isShooting = false;
             }
         }
+        
 
         void Rotate() {
             if(!IsOwner) return;
-            _rotation.x += Input.GetAxis("Mouse X") * rotationHorizontalSpeed;
-            _rotation.y += Input.GetAxis("Mouse Y") * rotationVerticalSpeed;
-            _rotation.y = Mathf.Clamp(_rotation.y, -verticalLimit, verticalLimit);
-            Quaternion Xquat = Quaternion.AngleAxis(_rotation.x, Vector3.up);
-            Quaternion Yquat = Quaternion.AngleAxis(_rotation.y, Vector3.left);
-            cameraTransform.localRotation = Xquat * Yquat;
+            Vector3 mousepos = new Vector3(Input.mousePosition.x, 0, Input.mousePosition.y);
+            mousepos = camera.ScreenToWorldPoint(mousepos);
+            mousepos.y = transform.position.y;
+            transform.rotation = Quaternion.LookRotation(mousepos);
+        }
 
-            var transformLocalRotation = transform.rotation;
-            transformLocalRotation.y = cameraTransform.localRotation.y;
-            transform.rotation = transformLocalRotation;
+        
+        private void OnTriggerEnter(Collider other) {
+            if (other.CompareTag("Zombie")) {
+                hp--;
+                if (hp <= 0) {
+                    transform.position = respawn.position;
+                    hp = maxhp;
+                }
+
+                Life.value = hp;
+            }
         }
 
         void Update() {
+            Debug.Log(Camera.main.ScreenToWorldPoint(Input.mousePosition));
             Move();
-            Shoot();
+            ShootClientRPC();
             HideLaser();
             Rotate();
         }
