@@ -11,15 +11,11 @@ namespace ClientServer
         public GameObject cameraPrefab;
         private Camera camera;
         private NetworkObject NetworkObject;
-        [SerializeField] private float speed;
-        [SerializeField] private Transform cameraTransform;
         private Quaternion _rotation;
         private float gravityValue = -9.81f, v, h;
         private Vector3 playerVelocity;
-        [SerializeField] private float rotationHorizontalSpeed;
-        [SerializeField] private float rotationVerticalSpeed;
-        [SerializeField] private float verticalLimit;
         [SerializeField] private Slider Life;
+        [SerializeField] private Image Fill;
         [SerializeField] private float hp;
         [SerializeField] private float maxhp;
         [SerializeField] private Transform respawn;
@@ -39,9 +35,9 @@ namespace ClientServer
             camera = cam.GetComponent<Camera>();
             script.player = this;
             Players.Add(this);
-            hp = maxhp;
             Life.gameObject.SetActive(IsOwner);
             Life.maxValue = maxhp;
+            hp = maxhp;
         }
 
         public override void OnNetworkDespawn() {
@@ -99,9 +95,15 @@ namespace ClientServer
                     transform.position = respawn.position;
                     hp = maxhp;
                 }
-
-                Life.value = hp;
+                
             }
+        }
+
+        void DisplayLife() {
+            Life.value = hp;
+            if (hp > 3) Fill.color = new Color(126, 180, 100);
+            if (hp == 2 || hp == 3) Fill.color = new Color(212, 187, 77);
+            if (hp < 2) Fill.color = new Color(180, 108, 100);
         }
 
         void Update() {
@@ -110,6 +112,7 @@ namespace ClientServer
             ShootClientRPC();
             HideLaser();
             Rotate();
+            DisplayLife();
         }
     }
 }
